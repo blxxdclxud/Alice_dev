@@ -124,9 +124,11 @@ def play_mentally_math(req, res, user_id):
             sessionStorage[user_id].mentally_math.correct_amount += 1
             res['response']['text'] = choice(CORRECT_ANSWERS_MATH)[0]
         else:
-            res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].mentally_math.curr_answer
+            res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[
+                user_id].mentally_math.curr_answer
         sessionStorage[user_id].mentally_math.amount += 1
     else:
+        reset_params('mentally_math', user_id)
         sessionStorage[user_id].mentally_math.game_started = True
 
     if level == 1:
@@ -153,7 +155,7 @@ def play_mentally_math(req, res, user_id):
             expression = str(dividend) + '/' + str(divider)
 
     sessionStorage[user_id].mentally_math.curr_answer = str(eval(expression))
-    res['response']['text'] += '.\n' + expression
+    res['response']['text'] += ' \n\n ' + expression
 
     print(sessionStorage[user_id])
 
@@ -162,13 +164,13 @@ def play_mentally_math(req, res, user_id):
             sessionStorage[user_id].mentally_math.level = min(level + 1, 5)
             res['response'][
                 'text'] = choice(CONGRATULATIONS_PHRASES)[0] + f"Из последних 10 примеров " \
-                                                            f"{sessionStorage[user_id].mentally_math.correct_amount} " \
-                                                            f"вы решили правильно. Теперь буду давать " \
-                                                            f"выражения посложнее."
+                                                               f"{sessionStorage[user_id].mentally_math.correct_amount} " \
+                                                               f"вы решили правильно. Теперь буду давать " \
+                                                               f"выражения посложнее."
         else:
             res['response'][
                 'text'] = choice(LOSE_PHRASES)[0] + "Вы допустили слишком много ошибок. Думаю пока не буду усложнять " \
-                                                 "примеры. Вам нужно еще немного потренироваться."
+                                                    "примеры. Вам нужно еще немного потренироваться."
         sessionStorage[user_id].mentally_math.amount = 0
         sessionStorage[user_id].mentally_math.correct_amount = 0
 
@@ -199,6 +201,7 @@ def play_capitals(req, res, user_id):
                                           ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1])
         sessionStorage[user_id].capitals.amount += 1
     else:
+        reset_params('capitals', user_id)
         sessionStorage[user_id].capitals.game_started = True
 
     response = requests.get(url)
@@ -215,7 +218,7 @@ def play_capitals(req, res, user_id):
         couple = quotes[randrange(1, 193)].text.split()
 
     sessionStorage[user_id].capitals.curr_couple = couple
-    res['response']['text'] += '.\n' + couple[-1]
+    res['response']['text'] += ' \n\n ' + couple[-1]
     print(sessionStorage[user_id])
 
     if sessionStorage[user_id].capitals.amount == 10:
@@ -228,13 +231,16 @@ def play_translator(req, res, user_id):
             pass
         elif 'режим' in req['request']['nlu']['tokens']:
             pass
-        if sessionStorage[user_id].translator.curr_answer in req['request']['nlu']['tokens']:
+        if any([i in req['request']['nlu']['tokens'] for i in
+                sessionStorage[user_id].translator.curr_answer.split(', ')]):
             sessionStorage[user_id].translator.correct_amount += 1
-            res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].translator.curr_answer
+            res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[
+                user_id].translator.curr_answer
         else:
             res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].translator.curr_answer
         sessionStorage[user_id].translator.amount += 1
     else:
+        reset_params('translator', user_id)
         sessionStorage[user_id].translator.game_started = True
 
     with open("words.json", 'rt') as file:
@@ -247,7 +253,7 @@ def play_translator(req, res, user_id):
             couple = [word, json_words[word]]
 
     sessionStorage[user_id].translator.curr_answer = couple[-1]
-    res['response']['text'] += '.\n' + couple[0]
+    res['response']['text'] += ' \n\n ' + couple[0]
     print(sessionStorage[user_id])
 
 
@@ -257,13 +263,16 @@ def play_proverbs(req, res, user_id):
     if sessionStorage[user_id].proverbs.game_started:
         if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
             pass
-        if sessionStorage[user_id].proverbs.curr_answer.split()[-1] in req['request']['nlu']['tokens']:
+        if (sessionStorage[user_id].proverbs.curr_answer.split()[-1].replace('ё', 'е') or
+            sessionStorage[user_id].proverbs.curr_answer.split()[-1].replace('ё', 'е')) in req['request']['nlu'][
+            'tokens']:
             sessionStorage[user_id].proverbs.correct_amount += 1
             res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].proverbs.curr_answer
         else:
             res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].proverbs.curr_answer
         sessionStorage[user_id].proverbs.amount += 1
     else:
+        reset_params('proverbs', user_id)
         sessionStorage[user_id].proverbs.game_started = True
 
     response = requests.get(url)
@@ -281,8 +290,16 @@ def play_proverbs(req, res, user_id):
 
     sessionStorage[user_id].proverbs.curr_answer = proverb
 
-    res['response']['text'] += '.\n' + ' '.join(proverb.split()[:-1])
+    res['response']['text'] += ' \n\n ' + ' '.join(proverb.split()[:-1])
     print(sessionStorage[user_id])
+
+
+def reset_params(exc, user_id):
+    for game in list(sessionStorage[user_id].keys())[2:]:
+        if game != exc:
+            sessionStorage[user_id][game].game_started = False
+        if 'attempt' in game:
+            sessionStorage[user_id][game].attempt = 0
 
 
 if __name__ == '__main__':
