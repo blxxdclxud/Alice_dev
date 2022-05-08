@@ -246,12 +246,8 @@ def play_capitals(req, res, user_id):
 
     sessionStorage[user_id].capitals.curr_couple = couple
     res['response']['text'] += '.\n' + couple[-1]
-    res['response']['tts'] = couple[-1]
+    res['response']['tts'] += couple[-1]
     print(sessionStorage[user_id])
-
-    if sessionStorage[user_id].capitals.amount == 10:
-        res['response']['text'] += TYRED_YET
-        res['response']['tts'] = TYRED_YET
 
 
 def play_translator(req, res, user_id):
