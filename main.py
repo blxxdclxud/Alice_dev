@@ -153,7 +153,7 @@ def play_mentally_math(req, res, user_id):
             expression = str(dividend) + '/' + str(divider)
 
     sessionStorage[user_id].mentally_math.curr_answer = str(eval(expression))
-    res['response']['text'] += '\n\n' + expression
+    res['response']['text'] += '.\n' + expression
 
     print(sessionStorage[user_id])
 
@@ -215,7 +215,7 @@ def play_capitals(req, res, user_id):
         couple = quotes[randrange(1, 193)].text.split()
 
     sessionStorage[user_id].capitals.curr_couple = couple
-    res['response']['text'] += '\n\n' + couple[-1]
+    res['response']['text'] += '.\n' + couple[-1]
     print(sessionStorage[user_id])
 
     if sessionStorage[user_id].capitals.amount == 10:
@@ -247,7 +247,7 @@ def play_translator(req, res, user_id):
             couple = [word, json_words[word]]
 
     sessionStorage[user_id].translator.curr_answer = couple[-1]
-    res['response']['text'] += '\n\n' + couple[0]
+    res['response']['text'] += '.\n' + couple[0]
     print(sessionStorage[user_id])
 
 
@@ -281,7 +281,7 @@ def play_proverbs(req, res, user_id):
 
     sessionStorage[user_id].proverbs.curr_answer = proverb
 
-    res['response']['text'] += '\n\n' + ' '.join(proverb.split()[:-1])
+    res['response']['text'] += '.\n' + ' '.join(proverb.split()[:-1])
     print(sessionStorage[user_id])
 
 
