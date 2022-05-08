@@ -48,34 +48,19 @@ def get_country(req):
 
 
 def get_translator_modes(res):
-    res['response']['card'] = {}
-    res['response']['card']['type'] = "ItemsList"
-    res['response']['card']['items'] = [
+    res['response']['buttons'] = [
         {
-            "image_id": "1652229/bd5bb3d640d0bfc7c0f8",
-            "title": "С русского на английский",
-            "button": {
-                "text": "С русского на английский",
-                "payload": {}
-            }
+            'title': 'С русского на английский',
+            'hide': True
         },
         {
-            "image_id": "937455/e7fb747d5dd3bbd49136",
-            "title": "С английского на русский",
-            "button": {
-                "text": "С английского на русский",
-                "payload": {}
-            }
+            'title': 'С английского на русский',
+            'hide': True
         },
         {
-            "image_id": "937455/e7fb747d5dd3bbd49136",
-            "title": "Без разницы) Давай вперемешку",
-            "button": {
-                "text": "Без разницы) Давай вперемешку",
-                "payload": {}
-            }
-        }
-    ]
+            'title': 'Без разницы) Давай вперемешку',
+            'hide': True
+        }]
 
 
 def get_buttons(res):
@@ -88,5 +73,9 @@ def get_buttons(res):
     },
         {
             'title': 'Выход',
+            'hide': True
+        },
+        {
+            'title': 'Режимы',
             'hide': True
         }]

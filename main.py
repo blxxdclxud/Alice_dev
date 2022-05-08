@@ -26,6 +26,17 @@ sessionStorage = CustomDict()
 morph = MorphAnalyzer()
 
 
+async def process():
+    def save_to_file():
+        with open("sessionStorage.json", "wt") as file:
+            json.dump(sessionStorage, file)
+
+    schedule.every(5).seconds.do(save_to_file)
+
+    while True:
+        schedule.run_pending()
+
+
 @alice_dev.route('/post', methods=['POST'])
 def main():
     logging.info(f'Request: {request.json!r}')
@@ -52,6 +63,7 @@ def handle_dialog(req, res):
         sessionStorage[user_id] = CustomDict(
             new_user=True,
             curr_game=None,
+            choose=False,
             mentally_math=CustomDict(first=True, level=1, amount=0,
                                      correct_amount=0,
                                      curr_answer=None, game_started=False),
@@ -68,17 +80,24 @@ def handle_dialog(req, res):
 
         if sessionStorage[user_id].new_user:
             res['response']['text'] = START_PHRASE
-            get_buttons(res)
             res['response']['tts'] = START_PHRASE[-1]
         else:
             res['response']['text'] = GREETING_AGAIN
-            get_buttons(res)
             res['response']['tts'] = GREETING_AGAIN[-1]
-        get_modes(res)
-
+        sessionStorage[user_id].choose = True
         return
 
     req_message = ' '.join(req['request']['nlu']['tokens'])
+
+    if sessionStorage[user_id].choose:
+        if any([i in req_message for i in ('да', 'давай')]):
+            res['response']['text'] = "Вот все режимы:"
+            get_modes(res)
+            get_buttons(res)
+        elif any([i in req_message for i in ('нет', 'не хочу')]):
+            res['response']['text'] = CLOSE_PHRASE
+            res['response']['tts'] = CLOSE_PHRASE
+            res['response']['end_session'] = True
 
     if any([i in req_message for i in ('арифметик', 'матем', 'счёт', 'счет')]):
         if sessionStorage[user_id].mentally_math.first:
@@ -137,16 +156,26 @@ def handle_dialog(req, res):
         sessionStorage[user_id].curr_game = play_proverbs
         play_proverbs(req, res, user_id)
 
-    elif any([i in req_message for i in HELP_PHRASES]):
+    elif any([i[0] in req_message for i in HELP_PHRASES]):
         res['response']['text'] = HELP_PHRASE
         get_buttons(res)
         res['response']['tts'] = HELP_PHRASE[-1]
 
-    elif 'что ты умеешь?' in req_message:
+    elif 'что ты умеешь' in req_message:
         res['response']['text'] = WHAT_CAN_YOU_DO_PHRASE
         get_buttons(res)
         res['response']['tts'] = WHAT_CAN_YOU_DO_PHRASE[-1]
+    elif 'режим' in req_message:
+        res['response']['text'] = "Вот все режимы:"
+        get_modes(res)
+        get_buttons(res)
+    elif any(i.lower() in req_message for i in STOP_PHRASES):
+        res['response']['text'] = CLOSE_PHRASE
+        res['response']['tts'] = CLOSE_PHRASE
+        res['response']['end_session'] = True
     else:
+        res['response']['text'] = MISUNDERSTOOD
+        res['response']['tts'] = MISUNDERSTOOD
         sessionStorage[user_id].curr_game(req, res, user_id)
 
 
@@ -207,11 +236,11 @@ def play_mentally_math(req, res, user_id):
 
     print(sessionStorage[user_id])
 
-    if sessionStorage[user_id].mentally_math.amount == 10:
-        if sessionStorage[user_id].mentally_math.correct_amount >= 6:
+    if sessionStorage[user_id].mentally_math.amount == 6:
+        if sessionStorage[user_id].mentally_math.correct_amount >= 3:
             sessionStorage[user_id].mentally_math.level = min(level + 1, 5)
             reply = choice(CONGRATULATIONS_PHRASES)[
-                        0] + f"Из последних 10 примеров " \
+                        0] + f"Из последних 6 примеров " \
                              f"{sessionStorage[user_id].mentally_math.correct_amount} " \
                              f"вы решили правильно. Теперь буду давать " \
                              f"выражения посложнее."
@@ -234,12 +263,12 @@ def play_capitals(req, res, user_id):
     url = "http://ostranah.ru/_lists/capitals.php"
 
     if sessionStorage[user_id].capitals.game_started:
-        if any([i in req['request']['nlu']['tokens'].lower() for i in
+        if any([i in req['request']['nlu']['tokens'] for i in
                 STOP_GAME_PHRASES]):
             pass
         if ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() == get_country(req) \
-                or ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() in req['request'][
-            'original_utterance']:
+                or ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() in ' '.join(req['request']['nlu'][
+            'tokens']):
             sessionStorage[user_id].capitals.correct_amount += 1
             reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + \
                     ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1])
@@ -291,10 +320,9 @@ def play_capitals(req, res, user_id):
 
 
 def play_translator(req, res, user_id):
+    get_translator_modes(res)
     if sessionStorage[user_id].translator.game_started:
         if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
-            pass
-        elif 'режим' in req['request']['nlu']['tokens']:
             pass
         if any([i in req['request']['nlu']['tokens'] for i in
                 sessionStorage[user_id].translator.curr_answer.split(', ')]):
@@ -390,3 +418,4 @@ def reset_params(exc, user_id):
 if __name__ == '__main__':
     app.register_blueprint(alice_dev)
     app.run()
+    process()
