@@ -76,3 +76,17 @@ def get_translator_modes(res):
             }
         }
     ]
+
+
+def get_buttons(res):
+    res['response']['buttons'] = [{
+        'title': 'Помощь',
+        'hide': True
+    }, {
+        'title': 'Что ты умеешь?',
+        'hide': True
+    },
+        {
+            'title': 'Выход',
+            'hide': True
+        }]
