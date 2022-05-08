@@ -6,7 +6,6 @@ from random import randrange, choice
 import requests
 from bs4 import BeautifulSoup
 from flask import Blueprint, request, Flask
-from pymorphy2 import MorphAnalyzer
 
 from custom_dict import CustomDict
 from phrases import *
@@ -19,22 +18,11 @@ alice_dev = Blueprint(
     __name__
 )
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 sessionStorage = CustomDict()
-
-morph = MorphAnalyzer()
-
-
-async def process():
-    def save_to_file():
-        with open("sessionStorage.json", "wt") as file:
-            json.dump(sessionStorage, file)
-
-    schedule.every(5).seconds.do(save_to_file)
-
-    while True:
-        schedule.run_pending()
 
 
 @alice_dev.route('/post', methods=['POST'])
@@ -90,14 +78,21 @@ def handle_dialog(req, res):
     req_message = ' '.join(req['request']['nlu']['tokens'])
 
     if sessionStorage[user_id].choose:
-        if any([i in req_message for i in ('да', 'давай')]):
+        if any([i in req_message for i in ACCEPT]):
             res['response']['text'] = "Вот все режимы:"
             get_modes(res)
             get_buttons(res)
-        elif any([i in req_message for i in ('нет', 'не хочу')]):
+            sessionStorage[user_id].choose = False
+        elif any([i in req_message for i in REJECT]):
             res['response']['text'] = CLOSE_PHRASE
             res['response']['tts'] = CLOSE_PHRASE
             res['response']['end_session'] = True
+            sessionStorage[user_id].choose = False
+        else:
+            reply = choice(MISUNDERSTOOD)
+            res['response']['text'] = reply[0]
+            res['response']['tts'] = reply[-1]
+        return
 
     if any([i in req_message for i in ('арифметик', 'матем', 'счёт', 'счет')]):
         if sessionStorage[user_id].mentally_math.first:
@@ -169,13 +164,11 @@ def handle_dialog(req, res):
         res['response']['text'] = "Вот все режимы:"
         get_modes(res)
         get_buttons(res)
-    elif any(i.lower() in req_message for i in STOP_PHRASES):
+    elif any(i[0].lower() in req_message for i in STOP_GAME_PHRASES):
         res['response']['text'] = CLOSE_PHRASE
         res['response']['tts'] = CLOSE_PHRASE
         res['response']['end_session'] = True
     else:
-        res['response']['text'] = MISUNDERSTOOD
-        res['response']['tts'] = MISUNDERSTOOD
         sessionStorage[user_id].curr_game(req, res, user_id)
 
 
@@ -183,7 +176,7 @@ def play_mentally_math(req, res, user_id):
     level = sessionStorage[user_id].mentally_math.level
 
     if sessionStorage[user_id].mentally_math.game_started:
-        if any([i in req['request']['nlu']['tokens'].lower() for i in
+        if any([i in req['request']['nlu']['tokens'] for i in
                 STOP_GAME_PHRASES]):
             pass
         elif sessionStorage[user_id].mentally_math.curr_answer in \
@@ -322,9 +315,7 @@ def play_capitals(req, res, user_id):
 def play_translator(req, res, user_id):
     get_translator_modes(res)
     if sessionStorage[user_id].translator.game_started:
-        if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
-            pass
-        if any([i in req['request']['nlu']['tokens'] for i in
+        if any([i in ' '.join(req['request']['nlu']['tokens']) for i in
                 sessionStorage[user_id].translator.curr_answer.split(', ')]):
             sessionStorage[user_id].translator.correct_amount += 1
 
@@ -408,7 +399,7 @@ def play_proverbs(req, res, user_id):
 
 
 def reset_params(exc, user_id):
-    for game in list(sessionStorage[user_id].keys())[2:]:
+    for game in list(sessionStorage[user_id].keys())[3:]:
         if game != exc:
             sessionStorage[user_id][game].game_started = False
         if 'attempt' in game:
@@ -418,4 +409,3 @@ def reset_params(exc, user_id):
 if __name__ == '__main__':
     app.register_blueprint(alice_dev)
     app.run()
-    process()
