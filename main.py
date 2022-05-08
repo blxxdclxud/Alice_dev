@@ -19,7 +19,8 @@ alice_dev = Blueprint(
 )
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.INFO,
+                    filename='alice.log')
 logger = logging.getLogger(__name__)
 
 sessionStorage = CustomDict()
