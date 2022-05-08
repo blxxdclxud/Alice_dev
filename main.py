@@ -60,8 +60,10 @@ def handle_dialog(req, res):
 
         if sessionStorage[user_id].new_user:
             res['response']['text'] = START_PHRASE
+            res['response']['tts'] = START_PHRASE[-1]
         else:
-            res['response']['text'] = "Я снова рада вас видеть! Что хотите попробовать на этот раз?"
+            res['response']['text'] = GREETING_AGAIN
+            res['response']['tts'] = GREETING_AGAIN[-1]
         get_modes(res)
 
         return
@@ -71,9 +73,11 @@ def handle_dialog(req, res):
     if any([i in req_message for i in ('арифметик', 'матем', 'счёт', 'счет')]):
         if sessionStorage[user_id].mentally_math.first:
             res['response']['text'] = START_MENTALLY_MATH
+            res['response']['tts'] = START_MENTALLY_MATH[-1]
             sessionStorage[user_id].mentally_math.first = False
         else:
-            res['response']['text'] = "Я вижу вам понравились мои примеры. Давайте порешаем еще."
+            res['response']['text'] = MENTALLY_MATH_AGAIN
+            res['response']['tts'] = MENTALLY_MATH_AGAIN[-1]
 
         sessionStorage[user_id].curr_game = play_mentally_math
         play_mentally_math(req, res, user_id)
@@ -81,9 +85,12 @@ def handle_dialog(req, res):
     elif any([i in req_message for i in ('столиц', 'стран', 'географи')]):
         if sessionStorage[user_id].capitals.first:
             res['response']['text'] = START_CAPITALS
+            res['response']['tts'] = START_CAPITALS[-1]
             sessionStorage[user_id].capitals.first = False
         else:
-            res['response']['text'] = "Что ж, давай снова потягаемся!"
+            reply = "Что ж, давай снова потягаемся!"
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
 
         sessionStorage[user_id].curr_game = play_capitals
         play_capitals(req, res, user_id)
@@ -92,27 +99,33 @@ def handle_dialog(req, res):
         if sessionStorage[user_id].translator.first:
             res['response']['text'] = START_TRANSLATOR
             sessionStorage[user_id].translator.first = False
+            res['response']['tts'] = START_TRANSLATOR[-1]
         else:
-            res['response']['text'] = "Решили снова пополнить словарный запас? Давайте поучим новые слова..."
+            res['response']['text'] = TRANSLATOR_AGAIN
+            res['response']['tts'] = TRANSLATOR_AGAIN[-1]
 
         sessionStorage[user_id].curr_game = play_translator
         play_translator(req, res, user_id)
 
     elif any([i in req_message for i in ('поговор', 'послов', 'выражен')]):
         if sessionStorage[user_id].proverbs.first:
-            res['response']['text'] = ""
+            res['response']['text'] = START_PROVERB
+            res['response']['tts'] = START_PROVERB[-1]
             sessionStorage[user_id].proverbs.first = False
         else:
-            res['response']['text'] = ""
+            res['response']['text'] = PROVERB_AGAIN
+            res['response']['tts'] = PROVERB_AGAIN[-1]
 
         sessionStorage[user_id].curr_game = play_proverbs
         play_proverbs(req, res, user_id)
 
     elif any([i in req_message for i in HELP_PHRASES]):
         res['response']['text'] = HELP_PHRASE
+        res['response']['tts'] = HELP_PHRASE[-1]
 
-    elif 'что ты умеешь' in req_message:
-        res['response']['text'] = ""
+    elif 'что ты умеешь?' in req_message:
+        res['response']['text'] = WHAT_CAN_YOU_DO_PHRASE
+        res['response']['tts'] = WHAT_CAN_YOU_DO_PHRASE[-1]
     else:
         sessionStorage[user_id].curr_game(req, res, user_id)
 
@@ -125,9 +138,13 @@ def play_mentally_math(req, res, user_id):
             pass
         elif sessionStorage[user_id].mentally_math.curr_answer in req['request']['original_utterance']:
             sessionStorage[user_id].mentally_math.correct_amount += 1
-            res['response']['text'] = choice(CORRECT_ANSWERS_MATH)[0]
+            reply = choice(CORRECT_ANSWERS_MATH)[0]
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         else:
-            res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].mentally_math.curr_answer
+            reply = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].mentally_math.curr_answer
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         sessionStorage[user_id].mentally_math.amount += 1
     else:
         sessionStorage[user_id].mentally_math.game_started = True
@@ -157,21 +174,24 @@ def play_mentally_math(req, res, user_id):
 
     sessionStorage[user_id].mentally_math.curr_answer = str(eval(expression))
     res['response']['text'] += '.\n' + expression
+    res['response']['tts'] = expression
 
     print(sessionStorage[user_id])
 
     if sessionStorage[user_id].mentally_math.amount == 10:
         if sessionStorage[user_id].mentally_math.correct_amount >= 6:
             sessionStorage[user_id].mentally_math.level = min(level + 1, 5)
-            res['response'][
-                'text'] = choice(CONGRATULATIONS_PHRASES)[0] + f"Из последних 10 примеров " \
+            reply = choice(CONGRATULATIONS_PHRASES)[0] + f"Из последних 10 примеров " \
                                                             f"{sessionStorage[user_id].mentally_math.correct_amount} " \
                                                             f"вы решили правильно. Теперь буду давать " \
                                                             f"выражения посложнее."
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         else:
-            res['response'][
-                'text'] = choice(LOSE_PHRASES)[0] + "Вы допустили слишком много ошибок. Думаю пока не буду усложнять " \
+            reply = choice(LOSE_PHRASES)[0] + "Вы допустили слишком много ошибок. Думаю пока не буду усложнять " \
                                                  "примеры. Вам нужно еще немного потренироваться."
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         sessionStorage[user_id].mentally_math.amount = 0
         sessionStorage[user_id].mentally_math.correct_amount = 0
 
@@ -187,19 +207,25 @@ def play_capitals(req, res, user_id):
                 or ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() in req['request'][
             'original_utterance']:
             sessionStorage[user_id].capitals.correct_amount += 1
-            res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + \
+            reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + \
                                       ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1])
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
             if sessionStorage[user_id].capitals.attempt == 1:
                 sessionStorage[user_id].capitals.attempt = 0
         else:
             if sessionStorage[user_id].capitals.attempt == 0:
                 sessionStorage[user_id].capitals.attempt += 1
-                res['response']['text'] = choice(ATTEMPTS_PHRASES)[0]
+                reply = choice(ATTEMPTS_PHRASES)[0]
+                res['response']['text'] = reply
+                res['response']['tts'] = reply[-1]
                 return
             else:
                 sessionStorage[user_id].capitals.attempt = 0
-                res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + \
+                reply = choice(INCORRECT_ANSWERS_MATH)[0] + \
                                           ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1])
+                res['response']['text'] = reply
+                res['response']['tts'] = reply[-1]
         sessionStorage[user_id].capitals.amount += 1
     else:
         sessionStorage[user_id].capitals.game_started = True
@@ -207,7 +233,8 @@ def play_capitals(req, res, user_id):
     response = requests.get(url)
 
     if not response:
-        res["response"]["text"] = "Ой! Кажется что-то пошло не так!"
+        res["response"]["text"] = SOMETHING_WRONG
+        res['response']['tts'] = SOMETHING_WRONG[-1]
         return
 
     soup = BeautifulSoup(response.text, 'lxml')
@@ -219,10 +246,12 @@ def play_capitals(req, res, user_id):
 
     sessionStorage[user_id].capitals.curr_couple = couple
     res['response']['text'] += '.\n' + couple[-1]
+    res['response']['tts'] = couple[-1]
     print(sessionStorage[user_id])
 
     if sessionStorage[user_id].capitals.amount == 10:
-        res['response']['text'] += "Еще не устали?"
+        res['response']['text'] += TYRED_YET
+        res['response']['tts'] = TYRED_YET
 
 
 def play_translator(req, res, user_id):
@@ -233,9 +262,13 @@ def play_translator(req, res, user_id):
             pass
         if sessionStorage[user_id].translator.curr_answer in req['request']['nlu']['tokens'].lower():
             sessionStorage[user_id].translator.correct_amount += 1
-            res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].translator.curr_answer
+            reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].translator.curr_answer
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         else:
-            res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].translator.curr_answer
+            reply = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].translator.curr_answer
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         sessionStorage[user_id].translator.amount += 1
     else:
         sessionStorage[user_id].translator.game_started = True
@@ -251,6 +284,7 @@ def play_translator(req, res, user_id):
 
     sessionStorage[user_id].translator.curr_answer = couple[-1]
     res['response']['text'] += '.\n' + couple[0]
+    res['response']['tts'] = couple[0]
     print(sessionStorage[user_id])
 
 
@@ -262,9 +296,13 @@ def play_proverbs(req, res, user_id):
             pass
         if sessionStorage[user_id].proverbs.curr_answer.split()[-1] in req['request']['nlu']['tokens'].lower():
             sessionStorage[user_id].proverbs.correct_amount += 1
-            res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].proverbs.curr_answer
+            reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].proverbs.curr_answer
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         else:
-            res['response']['text'] = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].proverbs.curr_answer
+            reply = choice(INCORRECT_ANSWERS_MATH)[0] + sessionStorage[user_id].proverbs.curr_answer
+            res['response']['text'] = reply
+            res['response']['tts'] = reply[-1]
         sessionStorage[user_id].proverbs.amount += 1
     else:
         sessionStorage[user_id].proverbs.game_started = True
@@ -272,7 +310,8 @@ def play_proverbs(req, res, user_id):
     response = requests.get(url)
 
     if not response:
-        res["response"]["text"] = "Ой! Кажется что-то пошло не так!"
+        res["response"]["text"] = SOMETHING_WRONG
+        res['response']['tts'] = SOMETHING_WRONG
         return
 
     soup = BeautifulSoup(response.text, 'lxml')
@@ -285,6 +324,7 @@ def play_proverbs(req, res, user_id):
     sessionStorage[user_id].proverbs.curr_answer = proverb
 
     res['response']['text'] += '.\n' + ' '.join(proverb.split()[:-1])
+    res['response']['tts'] = ' '.join(proverb.split()[:-1])
     print(sessionStorage[user_id])
 
 
