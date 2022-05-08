@@ -264,8 +264,8 @@ def play_capitals(req, res, user_id):
                 or ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() in ' '.join(req['request']['nlu'][
             'tokens']):
             sessionStorage[user_id].capitals.correct_amount += 1
-            reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + \
-                    ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1])
+            reply = choice(CORRECT_ANSWERS)[0] + \
+                    ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]) + choice(NEXT_PHRASES)[0]
             res['response']['text'] = reply
             get_buttons(res)
             res['response']['tts'] = reply[-1]
@@ -320,8 +320,8 @@ def play_translator(req, res, user_id):
                 sessionStorage[user_id].translator.curr_answer.split(', ')]):
             sessionStorage[user_id].translator.correct_amount += 1
 
-            reply = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[
-                user_id].translator.curr_answer
+            reply = choice(CORRECT_ANSWERS)[0] + sessionStorage[
+                user_id].translator.curr_answer + choice(NEXT_PHRASES)[0]
             res['response']['text'] = reply
             get_buttons(res)
             res['response']['tts'] = reply[-1]
