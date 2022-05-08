@@ -7,6 +7,7 @@ import logging
 from custom_dict import CustomDict
 from phrases import *
 from rest import *
+from pymorphy2 import MorphAnalyzer
 
 import json
 
@@ -15,6 +16,8 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 sessionStorage = CustomDict()
+
+morph = MorphAnalyzer()
 
 
 @app.route('/post', methods=['POST'])
@@ -63,9 +66,9 @@ def handle_dialog(req, res):
 
         return
 
-    req_message = req['request']['nlu']['tokens']
+    req_message = req['request']['nlu']['tokens'].lower()
 
-    if any([i in req_message for i in ('арифметика', 'математика', 'счёт', 'счет')]):
+    if any([i in req_message for i in ('арифметик', 'матем', 'счёт', 'счет')]):
         if sessionStorage[user_id].mentally_math.first:
             res['response']['text'] = START_MENTALLY_MATH
             sessionStorage[user_id].mentally_math.first = False
@@ -75,7 +78,7 @@ def handle_dialog(req, res):
         sessionStorage[user_id].curr_game = play_mentally_math
         play_mentally_math(req, res, user_id)
 
-    elif any([i in req_message for i in ('столицы', 'страны', 'география')]):
+    elif any([i in req_message for i in ('столиц', 'стран', 'географи')]):
         if sessionStorage[user_id].capitals.first:
             res['response']['text'] = START_CAPITALS
             sessionStorage[user_id].capitals.first = False
@@ -85,7 +88,7 @@ def handle_dialog(req, res):
         sessionStorage[user_id].curr_game = play_capitals
         play_capitals(req, res, user_id)
 
-    elif any([i in req_message for i in ('перевод', 'слов', 'английский')]):
+    elif any([i in req_message for i in ('перев', 'англ')]):
         if sessionStorage[user_id].translator.first:
             res['response']['text'] = START_TRANSLATOR
             sessionStorage[user_id].translator.first = False
@@ -95,7 +98,7 @@ def handle_dialog(req, res):
         sessionStorage[user_id].curr_game = play_translator
         play_translator(req, res, user_id)
 
-    elif any([i in req_message for i in ('поговорки', 'пословицы', 'выражения', 'поговорок')]):
+    elif any([i in req_message for i in ('поговор', 'послов', 'выражен')]):
         if sessionStorage[user_id].proverbs.first:
             res['response']['text'] = ""
             sessionStorage[user_id].proverbs.first = False
@@ -118,7 +121,7 @@ def play_mentally_math(req, res, user_id):
     level = sessionStorage[user_id].mentally_math.level
 
     if sessionStorage[user_id].mentally_math.game_started:
-        if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
+        if any([i in req['request']['nlu']['tokens'].lower() for i in STOP_GAME_PHRASES]):
             pass
         elif sessionStorage[user_id].mentally_math.curr_answer in req['request']['original_utterance']:
             sessionStorage[user_id].mentally_math.correct_amount += 1
@@ -178,7 +181,7 @@ def play_capitals(req, res, user_id):
     url = "http://ostranah.ru/_lists/capitals.php"
 
     if sessionStorage[user_id].capitals.game_started:
-        if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
+        if any([i in req['request']['nlu']['tokens'].lower() for i in STOP_GAME_PHRASES]):
             pass
         if ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() == get_country(req) \
                 or ' '.join(sessionStorage[user_id].capitals.curr_couple[:-1]).lower() in req['request'][
@@ -224,11 +227,11 @@ def play_capitals(req, res, user_id):
 
 def play_translator(req, res, user_id):
     if sessionStorage[user_id].translator.game_started:
-        if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
+        if any([i in req['request']['nlu']['tokens'].lower() for i in STOP_GAME_PHRASES]):
             pass
-        elif 'режим' in req['request']['nlu']['tokens']:
+        elif any([i in req['request']['nlu']['tokens'].lower() for i in ('режим', 'мод')]):
             pass
-        if sessionStorage[user_id].translator.curr_answer in req['request']['nlu']['tokens']:
+        if sessionStorage[user_id].translator.curr_answer in req['request']['nlu']['tokens'].lower():
             sessionStorage[user_id].translator.correct_amount += 1
             res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].translator.curr_answer
         else:
@@ -255,9 +258,9 @@ def play_proverbs(req, res, user_id):
     url = "http://iamruss.ru/famous-russian-proverb/"
 
     if sessionStorage[user_id].proverbs.game_started:
-        if any([i in req['request']['nlu']['tokens'] for i in STOP_GAME_PHRASES]):
+        if any([i in req['request']['nlu']['tokens'].lower() for i in STOP_GAME_PHRASES]):
             pass
-        if sessionStorage[user_id].proverbs.curr_answer.split()[-1] in req['request']['nlu']['tokens']:
+        if sessionStorage[user_id].proverbs.curr_answer.split()[-1] in req['request']['nlu']['tokens'].lower():
             sessionStorage[user_id].proverbs.correct_amount += 1
             res['response']['text'] = choice(CORRECT_ANSWERS_CAPITALS)[0] + sessionStorage[user_id].proverbs.curr_answer
         else:
