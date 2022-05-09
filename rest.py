@@ -47,6 +47,12 @@ def get_country(req):
             return entity['value'].get('country', None)
 
 
+def get_number(req):
+    for entity in req['request']['nlu']['entities']:
+        if entity['type'] == 'YANDEX.NUMBER':
+            return entity['value'].get('value', None)
+
+
 def get_translator_modes(res):
     res['response']['buttons'] = [
         {
