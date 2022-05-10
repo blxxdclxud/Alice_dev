@@ -48,6 +48,8 @@ def main():
 def handle_dialog(req, res):
     user_id = req['session']['user_id']
 
+    print("!!!   ", user_id, sessionStorage[user_id])
+
     if user_id not in sessionStorage:
         sessionStorage[user_id] = CustomDict(
             new_user=True,
