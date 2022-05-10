@@ -203,6 +203,7 @@ def handle_dialog(req, res):
         sessionStorage[user_id].curr_game(req, res, user_id)
 
     else:
+        get_buttons(res)
         reply = choice(MISUNDERSTOOD)
         res['response']['text'] = reply[0]
         res['response']['tts'] = reply[-1]
@@ -361,8 +362,7 @@ def play_capitals(req, res, user_id):
 def play_translator(req, res, user_id):
     get_translator_modes(res)
     if sessionStorage[user_id].translator.game_started:
-        if ' '.join(req['request']['nlu']['tokens']) in sessionStorage[user_id].translator.curr_answer \
-                or any(i in ' '.join(req['request']['nlu']['tokens']) for i in
+        if any(' '.join(req['request']['nlu']['tokens']).replace('to ', '') == i.replace('to ', '').replace('!', '') for i in
                        sessionStorage[user_id].translator.curr_answer.split(', ')):
             sessionStorage[user_id].translator.correct_amount += 1
 
