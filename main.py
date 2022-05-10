@@ -2,6 +2,7 @@ import json
 import logging
 from json import load
 from random import randrange, choice
+import os
 
 import requests
 from bs4 import BeautifulSoup
