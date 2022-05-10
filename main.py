@@ -2,7 +2,6 @@ import json
 import logging
 from json import load
 from random import randrange, choice
-from weitress import serve
 
 import requests
 from bs4 import BeautifulSoup
@@ -456,5 +455,5 @@ def reset_params(user_id):
 
 if __name__ == '__main__':
     app.register_blueprint(alice_dev)
-    # app.run()
-    serve(app, host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
