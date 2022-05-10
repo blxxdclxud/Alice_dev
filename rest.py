@@ -7,8 +7,7 @@ def get_modes(res):
             "title": "Ментальная арифметика",
             "description": "Я проверю ваши навыки устного счета.",
             "button": {
-                "text": "Ментальная арифметика",
-                "payload": {}
+                "text": "Ментальная арифметика"
             }
         },
         {
@@ -16,8 +15,7 @@ def get_modes(res):
             "title": "Столицы государств",
             "description": "Вы будете угадывать страны по их столицам.",
             "button": {
-                "text": "Столицы государств",
-                "payload": {}
+                "text": "Столицы государств"
             }
         },
         {
@@ -25,8 +23,7 @@ def get_modes(res):
             "title": "Перевод слов",
             "description": "Я даю вам слово, а вы мне его переводите.",
             "button": {
-                "text": "Перевод слов",
-                "payload": {}
+                "text": "Перевод слов"
             }
         },
         {
@@ -34,8 +31,7 @@ def get_modes(res):
             "title": "Изучение поговорок",
             "description": "Вы должны закончить поговорки.",
             "button": {
-                "text": "Изучение поговорок",
-                "payload": {}
+                "text": "Изучение поговорок"
             }
         }
     ]
@@ -51,22 +47,6 @@ def get_number(req):
     for entity in req['request']['nlu']['entities']:
         if entity['type'] == 'YANDEX.NUMBER':
             return entity['value'].get('value', None)
-
-
-def get_translator_modes(res):
-    res['response']['buttons'] = [
-        {
-            'title': 'С русского на английский',
-            'hide': True
-        },
-        {
-            'title': 'С английского на русский',
-            'hide': True
-        },
-        {
-            'title': 'Без разницы) Давай вперемешку',
-            'hide': True
-        }]
 
 
 def get_buttons(res):

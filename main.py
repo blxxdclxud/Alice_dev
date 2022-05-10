@@ -183,6 +183,7 @@ def handle_dialog(req, res):
 
     elif 'режим' in req_message:
         res['response']['text'] = "Вот все режимы:"
+        res['response']['tts'] = "Вот все режимы"
         get_modes(res)
         get_buttons(res)
         sessionStorage[user_id].in_a_game = False
@@ -360,9 +361,8 @@ def play_capitals(req, res, user_id):
 
 
 def play_translator(req, res, user_id):
-    get_translator_modes(res)
     if sessionStorage[user_id].translator.game_started:
-        if any(' '.join(req['request']['nlu']['tokens']).replace('to ', '') == i.replace('to ', '').replace('!', '') for i in
+        if any(' '.join(req['request']['nlu']['tokens']).replace('to ', '').lower() == i.replace('to ', '').replace('!', '').lower() for i in
                        sessionStorage[user_id].translator.curr_answer.split(', ')):
             sessionStorage[user_id].translator.correct_amount += 1
 
@@ -442,7 +442,7 @@ def play_proverbs(req, res, user_id):
 
     res['response']['text'] += ' \n\n ' + ' '.join(proverb.split()[:-1])
     get_buttons(res)
-    res['response']['tts'] = ' '.join(proverb.split()[:-1])
+    res['response']['tts'] = res['response']['text']
     print(sessionStorage[user_id])
 
 
